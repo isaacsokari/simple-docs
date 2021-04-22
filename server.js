@@ -12,7 +12,7 @@ mongoose
   .then(() => console.log('Connected to DB'))
   .catch((error) => console.error(error));
 
-const io = require('socket.io')(3001, {
+const io = require('socket.io')(4000, {
   cors: {
     origin: 'http://localhost:3000',
     methods: ['GET', 'POST'],
