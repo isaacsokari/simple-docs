@@ -3,6 +3,7 @@ import Quill, { TextChangeHandler } from 'quill';
 import io from 'socket.io-client';
 
 import 'quill/dist/quill.snow.css';
+import { useParams } from 'react-router';
 
 const TOOLBAR_OPTIONS = [
   [{ header: [1, 2, 3, 4, 5, 6, false] }],
@@ -20,7 +21,10 @@ const TextEditor = () => {
   // TODO: check this type later
   const [socket, setSocket] = useState<any>();
   const [quill, setQuill] = useState<Quill>();
+  const { documentId }: { documentId: string } = useParams();
+  const SAVE_INTERVAL_MS: number = 2000;
 
+  /* Connect to Socket.io server */
   useEffect(() => {
     const s = io('http://localhost:3001');
     setSocket(s);
@@ -30,7 +34,21 @@ const TextEditor = () => {
     };
   }, []);
 
+  /* Create rooms for documents with same id */
+  useEffect(() => {
+    if (socket == null || quill == null) return;
+
+    // change any type
+    socket.once('load-document', (document: any) => {
+      quill.setContents(document);
+      quill.enable(true);
+    });
+
+    socket.emit('get-document', documentId);
+  }, [socket, quill, documentId]);
+
   // TODO: sort out this type later
+  /* Send Changes on Text Input */
   useEffect((): any => {
     if (socket == null || quill == null) return;
 
@@ -46,8 +64,8 @@ const TextEditor = () => {
     };
   }, [socket, quill]);
 
-  /* Receive changes and update from server */
   // TODO: sort out this type later
+  /* Receive changes and update from server */
   useEffect((): any => {
     if (socket == null || quill == null) return;
 
@@ -59,6 +77,19 @@ const TextEditor = () => {
 
     return () => {
       socket.off('receive-changes', handler);
+    };
+  }, [socket, quill]);
+
+  /* Save document to database */
+  useEffect(() => {
+    if (socket == null || quill == null) return;
+
+    const interval = setInterval(() => {
+      socket.emit('save-document', quill.getContents());
+    }, SAVE_INTERVAL_MS);
+
+    return () => {
+      clearInterval(interval);
     };
   }, [socket, quill]);
 
@@ -74,6 +105,9 @@ const TextEditor = () => {
       theme: 'snow',
       modules: { toolbar: TOOLBAR_OPTIONS },
     });
+
+    q.disable();
+    q.setText('Loading Document...');
     setQuill(q);
   }, []);
 
