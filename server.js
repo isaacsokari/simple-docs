@@ -1,6 +1,15 @@
+require('dotenv').config();
+
+const express = require('express');
+const https = require('http');
+const { Server } = require('socket.io');
 const mongoose = require('mongoose');
 const Document = require('./Document');
-require('dotenv').config();
+
+const app = express();
+const server = https.createServer(app);
+
+const PORT = process.env.PORT || 4000;
 
 mongoose
   .connect(process.env.DB_URI, {
@@ -12,12 +21,16 @@ mongoose
   .then(() => console.log('Connected to DB'))
   .catch((error) => console.error(error));
 
-const io = require('socket.io')(process.env.PORT || 4000, {
-  cors: {
-    origin: 'http://localhost:3000',
-    methods: ['GET', 'POST'],
-  },
-});
+const io = new Server(server);
+
+if (process.env.NODE_ENV === 'production') {
+  app.use(enforce.HTTPS({ trustProtoHeader: true }));
+  app.use(express.static(path.join(__dirname, 'client/build')));
+
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+  });
+}
 
 const defaultValue = '';
 
@@ -46,3 +59,7 @@ async function FindOrCreateDocument(id) {
 
   return Document.create({ _id: id, data: defaultValue });
 }
+
+server.listen(PORT, () => {
+  console.log(`Server running on port: ${PORT}`);
+});

@@ -18,6 +18,7 @@
   "license": "ISC",
   "dependencies": {
     "dotenv": "^8.2.0",
+    "express": "^4.17.1",
     "express-sslify": "^1.2.0",
     "mongoose": "^5.12.5",
     "socket.io": "^4.0.1"
