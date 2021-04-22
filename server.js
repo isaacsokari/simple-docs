@@ -1,7 +1,8 @@
 require('dotenv').config();
 
 const express = require('express');
-const { enforce } = require('express-sslify');
+const enforce = require('express-sslify');
+
 const https = require('http');
 const { Server } = require('socket.io');
 const mongoose = require('mongoose');
